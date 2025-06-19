@@ -1,24 +1,84 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <template id="reservation_template">
     <t t-name="ReservationDashBoard">
-        <div>
-            <div class="oh_dashboards" style="max-height: calc(100vh - 50px);overflow-y: auto;">
-                <div class="container-fluid o_pj_dashboard">
-                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-                        <h2 class="dashboard-title text-white">Room Booking Dashboard</h2>
-                        <div class="month-selector d-flex gap-2 align-items-center">
-                            <input type="month" id="month" value="2025-01" style="display: none"/>
-                            <input type="text" name="datetimes" id="datetimes" placeholder="Select date range" />
+        <div class="oh_dashboards">
+            <div class="dashboard-container">
+                <!-- Enhanced Header Section -->
+                <div class="dashboard-header">
+                    <div class="dashboard-header-content">
+                        <div>
+                            <h1 class="dashboard-title">🏨 Room Booking Dashboard</h1>
+                            <p class="dashboard-subtitle">Manage your hotel room reservations with style and efficiency</p>
+                            
+                            <!-- Quick Stats -->
+                            <div class="dashboard-stats">
+                                <div class="stat-card">
+                                    <span class="stat-number" id="total-rooms">-</span>
+                                    <span class="stat-label">Total Rooms</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-number" id="available-rooms">-</span>
+                                    <span class="stat-label">Available</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-number" id="booked-rooms">-</span>
+                                    <span class="stat-label">Booked</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-number" id="occupancy-rate">-</span>
+                                    <span class="stat-label">Occupancy</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="controls-section">
+                            <div class="control-group">
+                                <label class="control-label">📅 Select Date Range</label>
+                                <input type="text" 
+                                       name="datetimes" 
+                                       id="datetimes" 
+                                       class="date-picker-input"
+                                       placeholder="Choose your booking period" />
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            <div class="quick-actions">
+                                <button class="quick-action-btn" id="today-btn">Today</button>
+                                <button class="quick-action-btn" id="week-btn">This Week</button>
+                                <button class="quick-action-btn" id="month-btn">This Month</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="RoomTrackTable" style="margin-bottom: 100px;">
-                    </div>
+                    <input type="month" id="month" value="2025-01" style="display: none"/>
                 </div>
 
+                <!-- Enhanced Table Section -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Room Availability Calendar</h3>
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-color legend-available"></div>
+                                <span>✅ Available</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-booked"></div>
+                                <span>🚫 Booked</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-selected"></div>
+                                <span>⭐ Selected</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-scroll-container">
+                        <div class="RoomTrackTable">
+                            <!-- Table will be dynamically generated here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </t>
 </template>
-
-
-
