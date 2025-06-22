@@ -33,6 +33,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
             this.selectedStartRow = null;
             this.selectedEndRow = null;
             this.isLoading = false;
+            this.currentDateRange = null; // Store current date range for refresh
         },
 
         /**
@@ -47,6 +48,12 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
 
                 return self.loadMonthDates(self.currentYear, self.currentMonth).then(function (dates) {
                     self.month_dates = dates;
+                    // Store initial date range
+                    self.currentDateRange = {
+                        type: 'month',
+                        year: self.currentYear,
+                        month: self.currentMonth
+                    };
                 }).then(function () {
                     return self._rpc({
                         model: "room.booking",
@@ -83,6 +90,81 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
                 model: "room.booking",
                 method: "get_month_dates_for_range",
                 args: [startDate, endDate],
+            });
+        },
+
+        /**
+         * Auto-refresh dashboard data and UI after booking changes
+         * Maintains current view position and date range
+         * @returns {Promise} Promise that resolves when refresh is complete
+         */
+        refreshDashboard: function() {
+            var self = this;
+            console.log('🔄 Refreshing dashboard...');
+            
+            return new Promise(function(resolve, reject) {
+                self.showLoading();
+                
+                // First, reload room details
+                self._rpc({
+                    model: "room.booking",
+                    method: "get_rooms_details_query",
+                }).then(function (roomData) {
+                    self.result = roomData;
+                    console.log('✅ Room data refreshed');
+                    
+                    // Then reload dates based on current view
+                    var datePromise;
+                    if (self.currentDateRange.type === 'range') {
+                        datePromise = self.loadMonthDatesForRange(
+                            self.currentDateRange.startDate, 
+                            self.currentDateRange.endDate
+                        );
+                    } else {
+                        datePromise = self.loadMonthDates(
+                            self.currentDateRange.year, 
+                            self.currentDateRange.month
+                        );
+                    }
+                    
+                    return datePromise;
+                }).then(function (dates) {
+                    self.month_dates = dates;
+                    console.log('✅ Date data refreshed');
+                    
+                    // Re-render the table with new data
+                    self.trigger_table();
+                    
+                    // Update statistics
+                    self.updateStats();
+                    
+                    // Hide loading indicator
+                    self.hideLoading();
+                    
+                    console.log('✅ Dashboard refresh completed');
+                    
+                    // Show success notification
+                    self.displayNotification({
+                        title: _t('Dashboard Updated'),
+                        message: _t('Booking data has been refreshed successfully'),
+                        type: 'success',
+                    });
+                    
+                    resolve();
+                    
+                }).catch(function (error) {
+                    console.error('❌ Error refreshing dashboard:', error);
+                    self.hideLoading();
+                    
+                    // Show error notification
+                    self.displayNotification({
+                        title: _t('Refresh Failed'),
+                        message: _t('Failed to refresh dashboard data. Please try again.'),
+                        type: 'danger',
+                    });
+                    
+                    reject(error);
+                });
             });
         },
 
@@ -209,7 +291,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
         },
 
         /**
-         * Open booking wizard for editing/viewing
+         * Open booking wizard for editing/viewing with auto-refresh on close
          * @param {number} bookingId - ID of the booking to open
          */
         openBookingWizard: function (bookingId) {
@@ -223,28 +305,28 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
                 var group = "hotel_reservation_dashboard.booking_edit_dashboard_access";
                 if (booking.length > 0) {
                     session.user_has_group(group).then(function (hasGroup) {
+                        var actionConfig = {
+                            type: 'ir.actions.act_window',
+                            res_model: 'room.booking',
+                            res_id: booking[0].id,
+                            views: [[false, 'form']],
+                            target: 'new',
+                            // Add auto-refresh on close
+                            on_close: function() {
+                                console.log('📝 Booking form closed, refreshing dashboard...');
+                                self.refreshDashboard();
+                            }
+                        };
+
                         if (!hasGroup) {
-                            self.do_action({
-                                type: 'ir.actions.act_window',
-                                res_model: 'room.booking',
-                                res_id: booking[0].id,
-                                views: [[false, 'form']],
-                                target: 'new',
-                                context: { 'create': false },
-                                flags: {
-                                    mode: 'readonly',
-                                    action_buttons: false,
-                                }
-                            });
-                        } else {
-                            self.do_action({
-                                type: 'ir.actions.act_window',
-                                res_model: 'room.booking',
-                                res_id: booking[0].id,
-                                views: [[false, 'form']],
-                                target: 'new',
-                            });
+                            actionConfig.context = { 'create': false };
+                            actionConfig.flags = {
+                                mode: 'readonly',
+                                action_buttons: false,
+                            };
                         }
+
+                        self.do_action(actionConfig);
                     }).catch(function (error) {
                         console.error("Error checking access:", error);
                     });
@@ -270,6 +352,13 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
             if (startDate && endDate) {
                 console.log("Selected Date Range:", startDate, "to", endDate);
 
+                // Store current date range for refresh
+                self.currentDateRange = {
+                    type: 'range',
+                    startDate: startDate,
+                    endDate: endDate
+                };
+
                 self.loadMonthDatesForRange(startDate, endDate).then(function (dates) {
                     self.month_dates = dates;
                     self.trigger_table();
@@ -285,6 +374,13 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
 
                     self.currentYear = year;
                     self.currentMonth = month;
+
+                    // Store current date range for refresh
+                    self.currentDateRange = {
+                        type: 'month',
+                        year: year,
+                        month: month
+                    };
 
                     self.loadMonthDates(year, month).then(function (dates) {
                         self.month_dates = dates;
@@ -623,6 +719,11 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
                             res_id: booking[0].id,
                             views: [[false, 'form']],
                             target: 'new',
+                            // Add auto-refresh on close
+                            on_close: function() {
+                                console.log('📝 Existing booking form closed, refreshing dashboard...');
+                                self.refreshDashboard();
+                            }
                         });
                     } else {
                         self.displayNotification({
@@ -676,7 +777,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
         },
 
         /**
-         * Open room booking wizard with selected dates and rooms
+         * Open room booking wizard with selected dates and rooms - UPDATED with auto-refresh
          * @param {number} rowIndex - Row index for room selection
          */
         openRoomBookingWizard: function (rowIndex) {
@@ -700,6 +801,9 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
 
             console.log("rooms_name", rooms_name);
 
+            // Reset selection immediately to clear UI
+            self.resetSelection();
+
             // Find available rooms
             self._rpc({
                 model: 'hotel.room',
@@ -713,19 +817,19 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
 
                     console.log("Room Line Data:", roomLineData);
 
-                    // Open booking form with pre-filled data
+                    // Open booking form with pre-filled data and auto-refresh on close
                     self.do_action({
                         type: 'ir.actions.act_window',
                         res_model: 'room.booking',
                         views: [[false, 'form']],
                         context: { 'default_room_line_ids': roomLineData },
                         target: 'new',
+                        // Add auto-refresh on close
+                        on_close: function() {
+                            console.log('📝 New booking form closed, refreshing dashboard...');
+                            self.refreshDashboard();
+                        }
                     });
-                    
-                    // Reset selection after opening wizard
-                    setTimeout(function() {
-                        self.resetSelection();
-                    }, 500);
                     
                 } else {
                     self.displayNotification({
@@ -733,7 +837,6 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
                         type: 'warning',
                         title: 'Room Not Found'
                     });
-                    self.resetSelection();
                 }
             });
         },
