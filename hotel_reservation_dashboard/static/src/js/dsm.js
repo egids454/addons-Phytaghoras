@@ -13,7 +13,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
     var ReservationDashBoard = AbstractAction.extend({
         template: 'ReservationDashBoard',
         events: {
-            'click .date-cell': 'toggleCellSelection',
+            'click .date-cell-content': 'toggleCellSelection',
             'change #month': 'DateChangeTriggerTable',
             'click #datetimes': 'Datepicker',
             'click #today-btn': 'selectToday',
@@ -535,7 +535,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
         },
 
         /**
-         * Create HTML for a booked cell
+         * Create HTML for a booked cell - UPDATED with date-cell-content wrapper
          * @param {string} date - Date string
          * @param {number} spanCount - Number of columns to span
          * @param {Object} bookingInfo - Booking information
@@ -544,42 +544,47 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
         createBookedCell: function(date, spanCount, bookingInfo) {
             return `
                 <td class="date-cell booked" data-date="${date}" colspan="${spanCount}">
-                    <div class="booking-content">
-                        <div class="customer-tag" data-booking-id="${bookingInfo.booking_id}">
-                            👤 ${bookingInfo.customer_name || 'Unknown Customer'}
+                    <div class="date-cell-content booked">
+                        <div class="booking-content">
+                            <div class="customer-tag" data-booking-id="${bookingInfo.booking_id}">
+                                👤 ${bookingInfo.customer_name || 'Unknown Customer'}
+                            </div>
+                            <div class="room-status-indicator booked"></div>
                         </div>
-                        <div class="room-status-indicator booked"></div>
                     </div>
                 </td>
             `;
         },
 
         /**
-         * Create HTML for an available cell
+         * Create HTML for an available cell - UPDATED with date-cell-content wrapper
          * @param {string} date - Date string
          * @returns {string} HTML string for available cell
          */
         createAvailableCell: function(date) {
             return `
                 <td class="date-cell available" data-date="${date}">
-                    <div class="availability-content">
-                        <div class="availability-text">✅ Available</div>
-                        <div class="room-status-indicator available"></div>
+                    <div class="date-cell-content available">
+                        <div class="availability-content">
+                            <div class="availability-text">✅ Available</div>
+                            <div class="room-status-indicator available"></div>
+                        </div>
                     </div>
                 </td>
             `;
         },
 
         /**
-         * Handle cell selection for booking creation
+         * Handle cell selection for booking creation - UPDATED to use date-cell-content
          * @param {Event} event - Click event
          */
         toggleCellSelection: function (event) {
             var self = this;
-            var $cell = $(event.currentTarget);
+            var $cellContent = $(event.currentTarget);
+            var $cell = $cellContent.closest('td');
             var date = $cell.attr('data-date');
             var rowIndex = $cell.closest('tr').data('row-index');
-            var isBooked = $cell.hasClass('booked');
+            var isBooked = $cellContent.hasClass('booked');
 
             if (isBooked) {
                 // Handle booked cell click - open existing booking
@@ -638,21 +643,22 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
          */
         handleAvailableCellClick: function($cell, date, rowIndex) {
             var self = this;
+            var $cellContent = $cell.find('.date-cell-content');
 
             if (!self.selectedStartDate) {
                 // First click - set start date
                 self.selectedStartDate = new Date(date);
                 self.selectedStartRow = rowIndex;
-                $cell.addClass('selected-start');
+                $cellContent.addClass('selected-start');
                 
                 // Add visual feedback
-                $cell.find('.availability-content').append('<div class="room-status-indicator selected"></div>');
+                $cellContent.find('.availability-content').append('<div class="room-status-indicator selected"></div>');
                 
             } else if (!self.selectedEndDate) {
                 // Second click - set end date and open booking wizard
                 self.selectedEndDate = new Date(date);
                 self.selectedEndRow = rowIndex;
-                $cell.addClass('selected-end');
+                $cellContent.addClass('selected-end');
 
                 console.log('Selected Date Range:', self.selectedStartDate, self.selectedEndDate);
 
@@ -760,7 +766,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
         },
 
         /**
-         * Highlight the selected date range across multiple rooms
+         * Highlight the selected date range across multiple rooms - UPDATED for date-cell-content
          */
         highlightDateRange: function () {
             var self = this;
@@ -823,7 +829,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
         },
 
         /**
-         * Highlight date range for a specific row
+         * Highlight date range for a specific row - UPDATED for date-cell-content
          * @param {number} rowIndex - Row index
          * @param {Date} startDate - Start date
          * @param {Date} endDate - End date
@@ -833,15 +839,17 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
             
             self.$(`.product-row[data-row-index="${rowIndex}"] .date-cell`).each(function () {
                 var cellDate = new Date($(this).data('date'));
-                if (cellDate >= startDate && cellDate <= endDate && !$(this).hasClass('booked')) {
-                    $(this).addClass('selected-range');
-                    $(this).find('.availability-content').append('<div class="room-status-indicator selected"></div>');
+                var $cellContent = $(this).find('.date-cell-content');
+                
+                if (cellDate >= startDate && cellDate <= endDate && !$cellContent.hasClass('booked')) {
+                    $cellContent.addClass('selected-range');
+                    $cellContent.find('.availability-content').append('<div class="room-status-indicator selected"></div>');
                 }
             });
         },
 
         /**
-         * Reset all selection states and visual indicators
+         * Reset all selection states and visual indicators - UPDATED for date-cell-content
          */
         resetSelection: function () {
             var self = this;
@@ -849,7 +857,7 @@ odoo.define('hotel_reservation_dashboard.dsm', function (require) {
             self.selectedEndDate = null;
             self.selectedStartRow = null;
             self.selectedEndRow = null;
-            self.$('.date-cell').removeClass('selected-start selected-end selected-range');
+            self.$('.date-cell-content').removeClass('selected-start selected-end selected-range');
             self.$('.room-status-indicator.selected').remove();
         }
     });

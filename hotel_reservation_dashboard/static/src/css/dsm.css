@@ -307,9 +307,8 @@
     border-bottom: none;
 }
 
-/* Cell Styling */
+/* Cell Styling - FIXED: Removed flexbox properties from td */
 .booking-table td {
-    padding: 0;
     border-right: 1px solid #e2e8f0;
     position: relative;
     vertical-align: middle;
@@ -318,6 +317,51 @@
     width: 120px;
     min-width: 120px;
     max-width: 120px;
+    padding: 0; /* Remove padding from td */
+}
+
+/* NEW: Date Cell - Only width properties */
+.date-cell {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+/* NEW: Date Cell Content - All visual styling moved here */
+.date-cell-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 600;
+    font-size: 12px;
+    position: relative;
+    overflow: hidden;
+    margin: 4px;
+    border-radius: 12px;
+    text-align: center;
+    line-height: 1.3;
+    box-sizing: border-box;
+}
+
+.date-cell-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+}
+
+.date-cell-content:hover::before {
+    opacity: 0.1;
 }
 
 /* Room Name Cell - Fixed Width and Sticky */
@@ -363,61 +407,22 @@
     border-right: none;
 }
 
-/* Date Cell Styling - Optimized for Horizontal Layout */
-.date-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 8px 4px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-weight: 600;
-    font-size: 12px;
-    position: relative;
-    overflow: hidden;
-    margin: 4px;
-    border-radius: 12px;
-    text-align: center;
-    line-height: 1.3;
-    /* Ensure consistent sizing */
-    width: calc(100% - 8px);
-    box-sizing: border-box;
-}
-
-.date-cell::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: inherit;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: inherit;
-}
-
-.date-cell:hover::before {
-    opacity: 0.1;
-}
-
 /* Available Cell Styling */
-.date-cell.available {
+.date-cell-content.available {
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
     border: 2px solid transparent;
 }
 
-.date-cell.available:hover {
+.date-cell-content.available:hover {
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
     background: linear-gradient(135deg, #059669, #047857);
 }
 
 /* Booked Cell Styling */
-.date-cell.booked {
+.date-cell-content.booked {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
@@ -425,16 +430,16 @@
     cursor: pointer;
 }
 
-.date-cell.booked:hover {
+.date-cell-content.booked:hover {
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
     background: linear-gradient(135deg, #dc2626, #b91c1c);
 }
 
 /* Selected Cell Styling */
-.date-cell.selected-start,
-.date-cell.selected-end,
-.date-cell.selected-range {
+.date-cell-content.selected-start,
+.date-cell-content.selected-end,
+.date-cell-content.selected-range {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
@@ -620,6 +625,12 @@
         min-width: 160px;
         max-width: 160px;
     }
+    
+    .date-cell {
+        width: 100px;
+        min-width: 100px;
+        max-width: 100px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -665,6 +676,12 @@
     }
     
     .date-cell {
+        width: 80px;
+        min-width: 80px;
+        max-width: 80px;
+    }
+    
+    .date-cell-content {
         min-height: 60px;
         font-size: 10px;
         padding: 6px 4px;
@@ -809,12 +826,12 @@
 }
 
 /* Micro-interactions */
-.date-cell {
+.date-cell-content {
     position: relative;
     overflow: hidden;
 }
 
-.date-cell::after {
+.date-cell-content::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -827,7 +844,7 @@
     transition: width 0.6s, height 0.6s;
 }
 
-.date-cell:active::after {
+.date-cell-content:active::after {
     width: 300px;
     height: 300px;
 }
@@ -844,13 +861,13 @@
 }
 
 /* Accessibility Improvements */
-.date-cell:focus {
+.date-cell-content:focus {
     outline: 3px solid #3b82f6;
     outline-offset: 2px;
     z-index: 10;
 }
 
-.date-cell[aria-selected="true"] {
+.date-cell-content[aria-selected="true"] {
     border: 3px solid #fbbf24;
 }
 
@@ -872,7 +889,7 @@
         border: 1px solid #ccc;
     }
     
-    .date-cell {
+    .date-cell-content {
         border: 1px solid #ccc;
         margin: 0;
         border-radius: 0;
