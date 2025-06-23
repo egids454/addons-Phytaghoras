@@ -15,7 +15,7 @@
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
                 <div class="page">
-                    <h2>Room Booking</h2>
+                    <h2>Room Booking Details</h2>
                     <br/>
                     <table class="table">
                         <thead>
@@ -25,33 +25,43 @@
                                 <th>Room No.</th>
                                 <th>Check-In</th>
                                 <th>Check-Out</th>
+                                <th>Duration</th>
+                                <th>Payment Status</th>
                                 <th>Reference No.</th>
                             </tr>
                         </thead>
-                        <t t-set="i" t-value="0"/>
-                        <t t-foreach="booking" t-as="line">
-                            <t t-set="i" t-value="i+1"/>
-                            <tr>
-                                <td>
-                                    <t t-esc="i"/>
-                                </td>
-                                <td>
-                                    <t t-esc="line['partner_id']"/>
-                                </td>
-                                <td>
-                                    <t t-esc="line['room']"/>
-                                </td>
-                                <td>
-                                    <t t-esc="line['checkin_date']"/>
-                                </td>
-                                <td>
-                                    <t t-esc="line['checkin_date']"/>
-                                </td>
-                                <td>
-                                    <t t-esc="line['name']"/>
-                                </td>
-                            </tr>
-                        </t>
+                        <tbody>
+                            <t t-set="i" t-value="0"/>
+                            <t t-foreach="booking" t-as="line">
+                                <t t-set="i" t-value="i+1"/>
+                                <tr>
+                                    <td>
+                                        <span t-esc="i"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line['partner_id']"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line['room']"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line['checkin_date']"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line['checkout_date']"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line['duration']"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line['payment_status']"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line['name']"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
                     </table>
                 </div>
             </t>

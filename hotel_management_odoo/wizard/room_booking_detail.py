@@ -83,26 +83,38 @@ class RoomBookingWizard(models.TransientModel):
             domain.append(
                 ("checkout_date", "<=", self.checkout),
             )
-        room_booking = self.env["room.booking"].search_read(
-            domain=domain,
-            fields=["partner_id", "name", "checkin_date", "checkout_date"],
-        )
-        for rec in room_booking:
-            rooms = (
-                self.env["room.booking"]
-                .browse(rec["id"])
-                .room_line_ids.room_id.mapped("name")
-            )
-            rec["partner_id"] = rec["partner_id"][1]
-            for room in rooms:
-                if self.room:
-                    if self.room.name == room:
-                        rec["room"] = room
-                        room_list.append(rec)
+        
+        # Search for bookings in the date range
+        bookings = self.env["room.booking"].search(domain)
+        
+        for booking in bookings:
+            invoice = self.env['account.move'].search([('ref', '=', booking.name)], limit=1)
+            payment_state = 'Belum Ada Invoice'
+            if invoice:
+                if invoice.payment_state == 'paid':
+                    payment_state = 'Lunas'
+                elif invoice.payment_state == 'in_payment':
+                    payment_state = 'Sebagian Dibayar'
+                elif invoice.payment_state == 'not_paid':
+                    payment_state = 'Belum Dibayar'
                 else:
-                    rec_copy = rec.copy()
-                    rec_copy["room"] = room
-                    room_list.append(rec_copy)
+                    payment_state = 'Dibatalkan'
+
+            for line in booking.room_line_ids:
+                # Filter by specific room if selected in wizard
+                if self.room and self.room.id != line.room_id.id:
+                    continue
+
+                room_data = {
+                    'partner_id': booking.partner_id.name,
+                    'name': booking.name,
+                    'checkin_date': line.checkin_date.strftime('%Y-%m-%d'),
+                    'checkout_date': line.checkout_date.strftime('%Y-%m-%d'),
+                    'room': line.room_id.name,
+                    'duration': f"{int(line.uom_qty)} hari",
+                    'payment_status': payment_state,
+                }
+                room_list.append(room_data)
 
         return room_list
 
@@ -118,8 +130,8 @@ class RoomBookingWizard(models.TransientModel):
             {"align": "center", "bold": True, "font_size": "23px", "border": True}
         )
         body = workbook.add_format({"align": "left", "text_wrap": True, "border": True})
-        sheet.merge_range("A1:F1", "Room Booking", head)
-        sheet.set_column("A2:F2", 18)
+        sheet.merge_range("A1:H1", "Room Booking", head)
+        sheet.set_column("A2:H2", 18)
         sheet.set_row(0, 30)
         sheet.set_row(1, 20)
         sheet.write("A2", "Sl No.", cell_format)
@@ -127,7 +139,9 @@ class RoomBookingWizard(models.TransientModel):
         sheet.write("C2", "Room No.", cell_format)
         sheet.write("D2", "Check In", cell_format)
         sheet.write("E2", "Check Out", cell_format)
-        sheet.write("F2", "Reference No.", cell_format)
+        sheet.write("F2", "Duration", cell_format)
+        sheet.write("G2", "Payment Status", cell_format)
+        sheet.write("H2", "Reference No.", cell_format)
         row = 2
         column = 0
         value = 1
@@ -137,7 +151,9 @@ class RoomBookingWizard(models.TransientModel):
             sheet.write(row, column + 2, i["room"], body)
             sheet.write(row, column + 3, i["checkin_date"], body)
             sheet.write(row, column + 4, i["checkout_date"], body)
-            sheet.write(row, column + 5, i["name"], body)
+            sheet.write(row, column + 5, i["duration"], body)
+            sheet.write(row, column + 6, i["payment_status"], body)
+            sheet.write(row, column + 7, i["name"], body)
             row = row + 1
             value = value + 1
         workbook.close()
