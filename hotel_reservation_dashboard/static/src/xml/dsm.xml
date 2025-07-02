@@ -11,7 +11,7 @@
                             <p class="dashboard-subtitle">Manage your hotel room reservations with style and efficiency</p>
                             
                             <!-- Quick Stats -->
-                            <div class="dashboard-stats">
+                            <div class="dashboard-stats" t-if="False">
                                 <div class="stat-card">
                                     <span class="stat-number" id="total-rooms">-</span>
                                     <span class="stat-label">Total Rooms</span>
