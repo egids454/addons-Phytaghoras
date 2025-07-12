@@ -14,7 +14,7 @@
                             <div class="dashboard-stats" t-if="False">
                                 <div class="stat-card">
                                     <span class="stat-number" id="total-rooms">-</span>
-                                    
+                                    <span class="stat-label">Total Rooms</span>
                                 </div>
                                 <div class="stat-card">
                                     <span class="stat-number" id="available-rooms">-</span>
